@@ -32,4 +32,5 @@ module json_to_quaff
   use json_to_quaff_energy_m, only: fallible_energy_t, fallible_energy_unit_t
   use json_to_quaff_thermal_conductivity_m, only: fallible_thermal_conductivity_t, fallible_thermal_conductivity_unit_t
   use json_to_quaff_specific_heat_m, only: fallible_specific_heat_t, fallible_specific_heat_unit_t
+  use json_to_quaff_molar_specific_heat_m, only: fallible_molar_specific_heat_t, fallible_molar_specific_heat_unit_t
 end module
