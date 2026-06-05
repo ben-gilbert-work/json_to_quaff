@@ -26,7 +26,10 @@ module json_to_quaff_test
       fallible_specific_heat_t, &
       fallible_amount_temperature_rate_t, & 
       fallible_conductance_t, &
-      fallible_heat_capacity_t
+      fallible_heat_capacity_t, &
+      fallible_molar_heat_capacity_t, &
+      fallible_force_t, &
+      fallible_dynamic_viscosity_t
 
   use quaff, only: &
       operator(.unit.), &
@@ -50,9 +53,12 @@ module json_to_quaff_test
       MOLS_PER_SECOND, &
       MOLS_KELVIN_PER_SECOND, &
       MOLS, &
-      watts_per_kelvin, &
-      joules_per_kelvin, &
-      mols_kelvin
+      WATTS_PER_KELVIN, &
+      JOULES_PER_KELVIN, &
+      MOLS_KELVIN, &
+      JOULES_PER_MOL_KELVIN, &
+      NEWTONS, &
+      PASCAL_SECONDS
   use rojff, only: fallible_json_value_t, parse_json_from_string
   use erloff, only: error_list_t
   use quaff_asserts_m, only: assert_equals
@@ -293,7 +299,34 @@ contains
               "with errors", &
               check_amount_with_errors) &
           ]) &
-    ])
+      , describe( &
+          "a fallible_molar_specific_heat_t", &
+          [ it( &
+              "with no errors", &
+              check_molar_specific_heat_valid) &
+          , it( &
+              "with errors", &
+              check_molar_specific_heat_with_errors) &
+          ]) &
+      , describe( &
+          "a fallible_force_t", &
+          [ it( &
+              "with no errors", &
+              check_force_valid) &
+          , it( &
+              "with errors", &
+              check_force_with_errors) &
+          ]) &
+      , describe( &
+          "a fallible_dynamic_viscosity_t", &
+          [ it( &
+              "with no errors", &
+              check_dynamic_viscosity_valid) &
+          , it( &
+              "with errors", &
+              check_dynamic_viscosity_with_errors) &
+          ]) &          
+      ])
   end function
 
   function check_time_valid() result(result_)
@@ -1400,4 +1433,137 @@ contains
       result_ = fail("fallible_quaff did not succesffuly retain errors from a failed fallible_json")
     end if
   end function
+
+  function check_force_valid() result(result_)
+    type(result_t) :: result_
+    type(fallible_json_value_t) :: fallible_json_force
+    type(fallible_force_t) :: fallible_quaff_force
+    type(error_list_t) :: errors
+    character(len=*), parameter :: force_c ='"1.0 N"'
+    double precision, parameter :: force_r = 1.0d0
+
+
+    fallible_json_force = parse_json_from_string(force_c)
+
+    fallible_quaff_force = fallible_force_t(fallible_json_force)
+
+    if (fallible_quaff_force%failed()) then
+      errors = fallible_quaff_force%errors()
+      result_ = fail(errors%to_string())
+    else
+      result_ = &
+        assert_equals(fallible_quaff_force%force(), &
+                        force_r.unit.mols)
+    end if
+  end function
+
+  function check_force_with_errors() result(result_)
+    type(result_t) :: result_
+    type(fallible_json_value_t) :: fallible_json_force
+    type(fallible_force_t) :: fallible_quaff_force
+    type(error_list_t) :: errors_quaff, errors_rojff
+    character(len=*), parameter :: not_a_json_c ='"1.0 W'
+
+
+    fallible_json_force = parse_json_from_string(not_a_json_c)
+
+    fallible_quaff_force = fallible_force_t(fallible_json_force)
+
+    if (fallible_quaff_force%failed()) then
+      errors_quaff = fallible_quaff_force%errors()
+      errors_rojff = fallible_json_force%errors
+      result_ = assert_equals(errors_quaff%to_string(), errors_rojff%to_string())
+    else
+      result_ = fail("fallible_quaff did not succesffuly retain errors from a failed fallible_json")
+    end if
+  end function
+
+  function check_dynamic_viscosity_valid() result(result_)
+    type(result_t) :: result_
+    type(fallible_json_value_t) :: fallible_json_dynamic_viscosity
+    type(fallible_dynamic_viscosity_t) :: fallible_quaff_dynamic_viscosity
+    type(error_list_t) :: errors
+    character(len=*), parameter :: dynamic_viscosity_c ='"1.0 Pa s"'
+    double precision, parameter :: dynamic_viscosity_r = 1.0d0
+
+
+    fallible_json_dynamic_viscosity = parse_json_from_string(dynamic_viscosity_c)
+
+    fallible_quaff_dynamic_viscosity = fallible_dynamic_viscosity_t(fallible_json_dynamic_viscosity)
+
+    if (fallible_quaff_dynamic_viscosity%failed()) then
+      errors = fallible_quaff_dynamic_viscosity%errors()
+      result_ = fail(errors%to_string())
+    else
+      result_ = &
+        assert_equals(fallible_quaff_dynamic_viscosity%dynamic_viscosity(), &
+                        dynamic_viscosity_r.unit.mols)
+    end if
+  end function
+
+  function check_dynamic_viscosity_with_errors() result(result_)
+    type(result_t) :: result_
+    type(fallible_json_value_t) :: fallible_json_dynamic_viscosity
+    type(fallible_dynamic_viscosity_t) :: fallible_quaff_dynamic_viscosity
+    type(error_list_t) :: errors_quaff, errors_rojff
+    character(len=*), parameter :: not_a_json_c ='"1.0 W'
+
+
+    fallible_json_dynamic_viscosity = parse_json_from_string(not_a_json_c)
+
+    fallible_quaff_dynamic_viscosity = fallible_dynamic_viscosity_t(fallible_json_dynamic_viscosity)
+
+    if (fallible_quaff_dynamic_viscosity%failed()) then
+      errors_quaff = fallible_quaff_dynamic_viscosity%errors()
+      errors_rojff = fallible_json_dynamic_viscosity%errors
+      result_ = assert_equals(errors_quaff%to_string(), errors_rojff%to_string())
+    else
+      result_ = fail("fallible_quaff did not succesffuly retain errors from a failed fallible_json")
+    end if
+  end function
+
+  function check_molar_heat_capacity_valid() result(result_)
+    type(result_t) :: result_
+    type(fallible_json_value_t) :: fallible_json_molar_heat_capacity
+    type(fallible_molar_heat_capacity_t) :: fallible_quaff_molar_heat_capacity
+    type(error_list_t) :: errors
+    character(len=*), parameter :: molar_heat_capacity_c ='"1.0 J/(K mol)"'
+    double precision, parameter :: molar_heat_capacity_r = 1.0d0
+
+
+    fallible_json_molar_heat_capacity = parse_json_from_string(molar_heat_capacity_c)
+
+    fallible_quaff_molar_heat_capacity = fallible_molar_heat_capacity_t(fallible_json_molar_heat_capacity)
+
+    if (fallible_quaff_molar_heat_capacity%failed()) then
+      errors = fallible_quaff_molar_heat_capacity%errors()
+      result_ = fail(errors%to_string())
+    else
+      result_ = &
+        assert_equals(fallible_quaff_molar_heat_capacity%molar_heat_capacity(), &
+                        molar_heat_capacity_r.unit.mols)
+    end if
+  end function
+
+  function check_molar_heat_capacity_with_errors() result(result_)
+    type(result_t) :: result_
+    type(fallible_json_value_t) :: fallible_json_molar_heat_capacity
+    type(fallible_molar_heat_capacity_t) :: fallible_quaff_molar_heat_capacity
+    type(error_list_t) :: errors_quaff, errors_rojff
+    character(len=*), parameter :: not_a_json_c ='"1.0 W'
+
+
+    fallible_json_molar_heat_capacity = parse_json_from_string(not_a_json_c)
+
+    fallible_quaff_molar_heat_capacity = fallible_molar_heat_capacity_t(fallible_json_molar_heat_capacity)
+
+    if (fallible_quaff_molar_heat_capacity%failed()) then
+      errors_quaff = fallible_quaff_molar_heat_capacity%errors()
+      errors_rojff = fallible_json_molar_heat_capacity%errors
+      result_ = assert_equals(errors_quaff%to_string(), errors_rojff%to_string())
+    else
+      result_ = fail("fallible_quaff did not succesffuly retain errors from a failed fallible_json")
+    end if
+  end function
+  
 end module
