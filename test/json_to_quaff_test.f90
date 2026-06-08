@@ -27,7 +27,7 @@ module json_to_quaff_test
       fallible_amount_temperature_rate_t, & 
       fallible_conductance_t, &
       fallible_heat_capacity_t, &
-      fallible_molar_heat_capacity_t, &
+      fallible_molar_specific_heat_t, &
       fallible_force_t, &
       fallible_dynamic_viscosity_t
 
@@ -56,7 +56,7 @@ module json_to_quaff_test
       WATTS_PER_KELVIN, &
       JOULES_PER_KELVIN, &
       MOLS_KELVIN, &
-      JOULES_PER_MOL_KELVIN, &
+      JOULES_PER_KELVIN_MOL, &
       NEWTONS, &
       PASCAL_SECONDS
   use rojff, only: fallible_json_value_t, parse_json_from_string
@@ -1453,7 +1453,7 @@ contains
     else
       result_ = &
         assert_equals(fallible_quaff_force%force(), &
-                        force_r.unit.mols)
+                        force_r.unit.NEWTONS)
     end if
   end function
 
@@ -1497,7 +1497,7 @@ contains
     else
       result_ = &
         assert_equals(fallible_quaff_dynamic_viscosity%dynamic_viscosity(), &
-                        dynamic_viscosity_r.unit.mols)
+                        dynamic_viscosity_r.unit.PASCAL_SECONDS)
     end if
   end function
 
@@ -1522,44 +1522,44 @@ contains
     end if
   end function
 
-  function check_molar_heat_capacity_valid() result(result_)
+  function check_molar_specific_heat_valid() result(result_)
     type(result_t) :: result_
-    type(fallible_json_value_t) :: fallible_json_molar_heat_capacity
-    type(fallible_molar_heat_capacity_t) :: fallible_quaff_molar_heat_capacity
+    type(fallible_json_value_t) :: fallible_json_molar_specific_heat
+    type(fallible_molar_specific_heat_t) :: fallible_quaff_molar_specific_heat
     type(error_list_t) :: errors
-    character(len=*), parameter :: molar_heat_capacity_c ='"1.0 J/(K mol)"'
-    double precision, parameter :: molar_heat_capacity_r = 1.0d0
+    character(len=*), parameter :: molar_specific_heat_c ='"1.0 J/(K mol)"'
+    double precision, parameter :: molar_specific_heat_r = 1.0d0
 
 
-    fallible_json_molar_heat_capacity = parse_json_from_string(molar_heat_capacity_c)
+    fallible_json_molar_specific_heat = parse_json_from_string(molar_specific_heat_c)
 
-    fallible_quaff_molar_heat_capacity = fallible_molar_heat_capacity_t(fallible_json_molar_heat_capacity)
+    fallible_quaff_molar_specific_heat = fallible_molar_specific_heat_t(fallible_json_molar_specific_heat)
 
-    if (fallible_quaff_molar_heat_capacity%failed()) then
-      errors = fallible_quaff_molar_heat_capacity%errors()
+    if (fallible_quaff_molar_specific_heat%failed()) then
+      errors = fallible_quaff_molar_specific_heat%errors()
       result_ = fail(errors%to_string())
     else
       result_ = &
-        assert_equals(fallible_quaff_molar_heat_capacity%molar_heat_capacity(), &
-                        molar_heat_capacity_r.unit.mols)
+        assert_equals(fallible_quaff_molar_specific_heat%molar_specific_heat(), &
+                        molar_specific_heat_r.unit.JOULES_PER_KELVIN_MOL)
     end if
   end function
 
-  function check_molar_heat_capacity_with_errors() result(result_)
+  function check_molar_specific_heat_with_errors() result(result_)
     type(result_t) :: result_
-    type(fallible_json_value_t) :: fallible_json_molar_heat_capacity
-    type(fallible_molar_heat_capacity_t) :: fallible_quaff_molar_heat_capacity
+    type(fallible_json_value_t) :: fallible_json_molar_specific_heat
+    type(fallible_molar_specific_heat_t) :: fallible_quaff_molar_specific_heat
     type(error_list_t) :: errors_quaff, errors_rojff
     character(len=*), parameter :: not_a_json_c ='"1.0 W'
 
 
-    fallible_json_molar_heat_capacity = parse_json_from_string(not_a_json_c)
+    fallible_json_molar_specific_heat = parse_json_from_string(not_a_json_c)
 
-    fallible_quaff_molar_heat_capacity = fallible_molar_heat_capacity_t(fallible_json_molar_heat_capacity)
+    fallible_quaff_molar_specific_heat = fallible_molar_specific_heat_t(fallible_json_molar_specific_heat)
 
-    if (fallible_quaff_molar_heat_capacity%failed()) then
-      errors_quaff = fallible_quaff_molar_heat_capacity%errors()
-      errors_rojff = fallible_json_molar_heat_capacity%errors
+    if (fallible_quaff_molar_specific_heat%failed()) then
+      errors_quaff = fallible_quaff_molar_specific_heat%errors()
+      errors_rojff = fallible_json_molar_specific_heat%errors
       result_ = assert_equals(errors_quaff%to_string(), errors_rojff%to_string())
     else
       result_ = fail("fallible_quaff did not succesffuly retain errors from a failed fallible_json")
