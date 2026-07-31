@@ -17,6 +17,7 @@ module json_to_quaff_test
       fallible_mass_rate_t, &
       fallible_power_t, &
       fallible_speed_t, &
+      fallible_acceleration_t, &
       fallible_molar_mass_t, &
       fallible_density_t, &
       fallible_heat_transfer_coefficient_t, &
@@ -58,7 +59,8 @@ module json_to_quaff_test
       MOLS_KELVIN, &
       JOULES_PER_KELVIN_MOL, &
       NEWTONS, &
-      PASCAL_SECONDS
+      PASCAL_SECONDS, &
+      METERS_PER_SQUARE_SECOND
   use rojff, only: fallible_json_value_t, parse_json_from_string
   use erloff, only: error_list_t
   use quaff_asserts_m, only: assert_equals
@@ -146,6 +148,15 @@ contains
               "with errors", &
               check_speed_with_errors) &
           ]) &
+      , describe( &
+          "a fallible_acceleration_t", &
+          [ it( &
+              "with no errors", &
+              check_acceleration_valid) &
+          , it( &
+              "with errors", &
+              check_acceleration_with_errors) &
+          ]) &              
       , describe( &
           "a fallible_integer_t", &
           [ it( &
@@ -620,6 +631,48 @@ contains
     end if
   end function
 
+  function check_acceleration_valid() result(result_)
+    type(result_t) :: result_
+    type(fallible_json_value_t) :: fallible_json_acceleration
+    type(fallible_acceleration_t) :: fallible_quaff_acceleration
+    type(error_list_t) :: errors
+    character(len=*), parameter :: acceleration_c ='"1.0 m/s^2"'
+    double precision, parameter :: acceleration_r = 1.0d0
+
+
+    fallible_json_acceleration = parse_json_from_string(acceleration_c)
+
+    fallible_quaff_acceleration = fallible_acceleration_t(fallible_json_acceleration)
+
+    if (fallible_quaff_acceleration%failed()) then
+      errors = fallible_quaff_acceleration%errors()
+      result_ = fail(errors%to_string())
+    else
+      result_ = assert_equals(fallible_quaff_acceleration%acceleration(), acceleration_r.unit.METERS_PER_SQUARE_SECOND)
+    end if
+  end function
+
+  function check_acceleration_with_errors() result(result_)
+    type(result_t) :: result_
+    type(fallible_json_value_t) :: fallible_json_acceleration
+    type(fallible_acceleration_t) :: fallible_quaff_acceleration
+    type(error_list_t) :: errors_quaff, errors_rojff
+    character(len=*), parameter :: not_a_json_c ='"1.0 m'
+
+
+    fallible_json_acceleration = parse_json_from_string(not_a_json_c)
+
+    fallible_quaff_acceleration = fallible_acceleration_t(fallible_json_acceleration)
+
+    if (fallible_quaff_acceleration%failed()) then
+      errors_quaff = fallible_quaff_acceleration%errors()
+      errors_rojff = fallible_json_acceleration%errors
+      result_ = assert_equals(errors_quaff%to_string(), errors_rojff%to_string())
+    else
+      result_ = fail("fallible_quaff did not succesffuly retain errors from a failed fallible_json")
+    end if
+  end function
+  
   function check_temperature_valid() result(result_)
     type(result_t) :: result_
     type(fallible_json_value_t) :: fallible_json_temperature
